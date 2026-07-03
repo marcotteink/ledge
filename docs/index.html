@@ -250,17 +250,12 @@
   }
   .gatemock h4 { font-size: 14px; margin-bottom: 8px; }
   .gatemock p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
-  .gatemock .b { border-radius: 999px; padding: 8px 0; font-size: 13px; font-weight: 600; margin-top: 8px; }
-  .gatemock .b.trash { background: #2f7cf6; color: #fff; position: relative; }
-  .gatemock .b.trash::after {
-    content: "do NOT click this"; position: absolute; right: -8px; top: 50%;
-    transform: translate(100%, -50%); font-size: 11px; color: #f78; white-space: nowrap;
-  }
-  .gatemock .b.done { background: rgba(255,255,255,0.12); color: var(--text); position: relative; }
-  .gatemock .b.done::after {
-    content: "click Done \2192 then step 4"; position: absolute; right: -8px; top: 50%;
-    transform: translate(100%, -50%); font-size: 11px; color: #7fd8a5; white-space: nowrap;
-  }
+  .gatemock .b { border-radius: 999px; padding: 8px 0; font-size: 13px; font-weight: 600; margin-top: 10px; }
+  .gatemock .b.trash { background: #2f7cf6; color: #fff; }
+  .gatemock .b.done { background: rgba(255,255,255,0.12); color: var(--text); }
+  .gatemock .hint { font-size: 11px; font-weight: 600; margin-top: 5px; }
+  .gatemock .hint.no { color: #f38a8a; }
+  .gatemock .hint.yes { color: #7fd8a5; }
   .mockcol { display: flex; flex-direction: column; gap: 8px; }
   .mockcap {
     font-size: 11px; color: var(--muted); text-transform: uppercase;
@@ -288,9 +283,6 @@
   .setmock .note { color: var(--muted); font-size: 10.5px; margin-top: 6px; line-height: 1.5; }
   @media (max-width: 860px) {
     .installgrid { grid-template-columns: 1fr; }
-    .gatemock .b.trash::after, .gatemock .b.done::after { display: none; }
-    .gatemock .b.trash::before { content: "\2715 "; color: #f78; }
-    .gatemock .b.done::before { content: "\2713 "; color: #7fd8a5; }
   }
   details {
     background: var(--card); border: 1px solid var(--card-border); border-radius: 12px;
@@ -445,7 +437,9 @@
               <h4>"Ledge" Not Opened</h4>
               <p>Apple could not verify "Ledge" is free of malware that may harm your Mac or compromise your privacy.</p>
               <div class="b trash">Move to Trash</div>
+              <div class="hint no">&#10005; do not click this</div>
               <div class="b done">Done</div>
+              <div class="hint yes">&#10003; click Done, then do step 4</div>
             </div>
           </div>
           <div>
