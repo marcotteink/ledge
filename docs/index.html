@@ -261,6 +261,31 @@
     content: "click Done \2192 then step 4"; position: absolute; right: -8px; top: 50%;
     transform: translate(100%, -50%); font-size: 11px; color: #7fd8a5; white-space: nowrap;
   }
+  .mockcol { display: flex; flex-direction: column; gap: 8px; }
+  .mockcap {
+    font-size: 11px; color: var(--muted); text-transform: uppercase;
+    letter-spacing: 1.2px; text-align: center; margin-top: 16px; font-weight: 700;
+  }
+  .setmock {
+    background: #232327; border: 1px solid rgba(255,255,255,0.12); border-radius: 14px;
+    padding: 16px 16px 14px; font-size: 12.5px; max-width: 320px; margin: 8px auto 0;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+  }
+  .setmock .sect { font-weight: 700; font-size: 13px; margin-bottom: 4px; }
+  .setmock .row {
+    display: flex; justify-content: space-between; align-items: center; gap: 10px;
+    padding: 10px 0; border-bottom: 1px solid rgba(255,255,255,0.08); font-size: 12px;
+  }
+  .setmock .row:last-of-type { border-bottom: none; }
+  .setmock .pill {
+    background: rgba(255,255,255,0.14); border-radius: 7px; padding: 4px 10px;
+    font-size: 11.5px; white-space: nowrap; flex-shrink: 0;
+  }
+  .setmock .row.blocked { position: relative; }
+  .setmock .redarrow {
+    position: absolute; right: 86px; top: 24px; pointer-events: none;
+  }
+  .setmock .note { color: var(--muted); font-size: 10.5px; margin-top: 6px; line-height: 1.5; }
   @media (max-width: 860px) {
     .installgrid { grid-template-columns: 1fr; }
     .gatemock .b.trash::after, .gatemock .b.done::after { display: none; }
@@ -408,20 +433,44 @@
           <li><strong>Open it. You'll see the warning shown here.</strong>
             <span>Click <strong style="color:var(--text)">Done</strong>. Not "Move to Trash". This is macOS being cautious about any app that isn't in its paid developer registry, not a malware detection.</span></li>
           <li><strong>Approve it in System Settings.</strong>
-            <span>Open System Settings, go to Privacy &amp; Security, scroll to the bottom. You'll see "Ledge was blocked". Click <strong style="color:var(--text)">Open Anyway</strong>, then confirm.</span></li>
+            <span>Open System Settings, go to Privacy &amp; Security, scroll to the bottom Security section. You'll see "Ledge was blocked to protect your Mac", exactly as pictured here. Click <strong style="color:var(--text)">Open Anyway</strong>, then confirm.</span></li>
           <li><strong>Done. Look for the tray icon in your menu bar.</strong>
             <span>Turn on Start at Login from its menu, then drag any file to see the shelf appear. The warning never comes back.</span></li>
         </ol>
-        <div class="gatemock" aria-hidden="true">
-          <div class="house">&#127968;</div>
-          <h4>"Ledge" Not Opened</h4>
-          <p>Apple could not verify "Ledge" is free of malware that may harm your Mac or compromise your privacy.</p>
-          <div class="b trash">Move to Trash</div>
-          <div class="b done">Done</div>
+        <div class="mockcol" aria-hidden="true">
+          <div>
+            <div class="mockcap">Step 3: what you'll see</div>
+            <div class="gatemock">
+              <div class="house">&#127968;</div>
+              <h4>"Ledge" Not Opened</h4>
+              <p>Apple could not verify "Ledge" is free of malware that may harm your Mac or compromise your privacy.</p>
+              <div class="b trash">Move to Trash</div>
+              <div class="b done">Done</div>
+            </div>
+          </div>
+          <div>
+            <div class="mockcap">Step 4: where to approve</div>
+            <div class="setmock">
+              <div class="sect">Security</div>
+              <div class="row">
+                <span>Allow applications from</span>
+                <span class="pill">App Store &amp; Known Developers</span>
+              </div>
+              <div class="row blocked">
+                <span>"Ledge" was blocked to protect your Mac.</span>
+                <span class="pill">Open Anyway</span>
+                <svg class="redarrow" width="54" height="46" viewBox="0 0 54 46" fill="none">
+                  <path d="M6 42 C 20 38, 34 28, 43 12" stroke="#ff3b30" stroke-width="4" stroke-linecap="round" fill="none"/>
+                  <path d="M33 13 L44 8 L45 21" stroke="#ff3b30" stroke-width="4" stroke-linecap="round" stroke-linejoin="round" fill="none"/>
+                </svg>
+              </div>
+              <div class="note">Apple could not verify "Ledge" is free of malware that may harm your Mac or compromise your privacy.</div>
+            </div>
+          </div>
         </div>
       </div>
       <div class="callout">
-        <strong>Why does this happen?</strong> Apple charges $99/year for the developer program that removes this warning, and Ledge is a free tool. The trade is one extra approval step. If you'd rather trust nothing but your own eyes, the full source code is on <a href="https://github.com/marcotteink/ledge" style="color:var(--accent-2)">GitHub</a> and you can build it yourself with <code>./build.sh</code>.
+        <strong>Is that warning normal? Yes, completely.</strong> macOS shows it for every app distributed outside the Mac App Store unless the developer pays Apple $99 every year to make it disappear. Ledge is free and always will be, and paying a yearly fee to remove a dialog box from a free tool doesn't make sense. The message means "Apple doesn't have this developer in its paid registry." It does not mean anything harmful was found. You approve once and the warning never comes back. And because the entire source code is public on <a href="https://github.com/marcotteink/ledge" style="color:var(--accent-2)">GitHub</a>, you don't have to take anyone's word for what the app does: read it, or build it yourself with <code>./build.sh</code>.
       </div>
     </div>
   </section>
@@ -449,6 +498,10 @@
     <details>
       <summary>Is it really free?</summary>
       <p>Yes. Free forever, MIT licensed, no trial, no locked features, no account. It was built to replace a paid app and is shared in that same spirit.</p>
+    </details>
+    <details>
+      <summary>macOS says it "could not verify" Ledge. Is that bad?</summary>
+      <p>It's normal and expected for free apps. Apple shows that message for any app whose developer doesn't pay for the $99/year Apple Developer Program, and since Ledge is free, that fee isn't happening. Nothing harmful was detected; Apple simply doesn't have the developer in its paid registry. Click Done in the warning, then System Settings, Privacy &amp; Security, scroll to the bottom, Open Anyway. You do this exactly once. The Terminal install option skips the warning entirely, and the full source is on GitHub if you want to verify what the app does yourself.</p>
     </details>
     <details>
       <summary>Where does my stuff live?</summary>
