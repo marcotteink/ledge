@@ -227,6 +227,46 @@
   td:first-child { font-weight: 600; white-space: nowrap; }
   td:last-child { color: var(--muted); }
 
+  .installgrid { display: grid; grid-template-columns: 1.2fr 0.8fr; gap: 26px; align-items: start; margin-top: 8px; }
+  .cmdblock {
+    background: #0a0f1e; border: 1px solid var(--card-border); border-radius: 12px;
+    padding: 16px 18px; margin-top: 14px; overflow-x: auto;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace; font-size: 12.5px;
+    color: #9fd0ff; white-space: pre; line-height: 1.7;
+  }
+  .gatemock {
+    background: #1c1c1e; border: 1px solid rgba(255,255,255,0.12); border-radius: 22px;
+    padding: 26px 22px 20px; max-width: 300px; margin: 14px auto 0; text-align: center;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5); position: relative;
+  }
+  .gatemock .house {
+    width: 52px; height: 52px; margin: 0 auto 14px; position: relative;
+    background: rgba(255,255,255,0.14); border-radius: 12px;
+    display: flex; align-items: center; justify-content: center; font-size: 26px;
+  }
+  .gatemock .house::after {
+    content: "\26A0"; position: absolute; bottom: -6px; right: -8px; font-size: 18px;
+    color: #f7c948;
+  }
+  .gatemock h4 { font-size: 14px; margin-bottom: 8px; }
+  .gatemock p { font-size: 12px; color: var(--muted); line-height: 1.5; margin-bottom: 16px; }
+  .gatemock .b { border-radius: 999px; padding: 8px 0; font-size: 13px; font-weight: 600; margin-top: 8px; }
+  .gatemock .b.trash { background: #2f7cf6; color: #fff; position: relative; }
+  .gatemock .b.trash::after {
+    content: "do NOT click this"; position: absolute; right: -8px; top: 50%;
+    transform: translate(100%, -50%); font-size: 11px; color: #f78; white-space: nowrap;
+  }
+  .gatemock .b.done { background: rgba(255,255,255,0.12); color: var(--text); position: relative; }
+  .gatemock .b.done::after {
+    content: "click Done \2192 then step 4"; position: absolute; right: -8px; top: 50%;
+    transform: translate(100%, -50%); font-size: 11px; color: #7fd8a5; white-space: nowrap;
+  }
+  @media (max-width: 860px) {
+    .installgrid { grid-template-columns: 1fr; }
+    .gatemock .b.trash::after, .gatemock .b.done::after { display: none; }
+    .gatemock .b.trash::before { content: "\2715 "; color: #f78; }
+    .gatemock .b.done::before { content: "\2713 "; color: #7fd8a5; }
+  }
   details {
     background: var(--card); border: 1px solid var(--card-border); border-radius: 12px;
     padding: 16px 20px; margin-top: 12px;
@@ -350,19 +390,38 @@
   <section id="install">
     <p class="kicker">Install</p>
     <h2>Up and running in a minute.</h2>
+    <p class="lede">Ledge is free and open source, not notarized through Apple's paid developer program. That means macOS shows a scary-looking warning on first launch. It's a 20 second detour, and there are two ways through it.</p>
+
     <div class="install">
-      <ol>
-        <li><strong>Download and unzip.</strong>
-          <span>Grab <a href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip" style="color:var(--accent-2)">Ledge.zip</a> and double-click it. You get Ledge.app.</span></li>
-        <li><strong>Move Ledge.app to your Applications folder.</strong>
-          <span>Just drag it in.</span></li>
-        <li><strong>First launch: tell macOS it's OK.</strong>
-          <span>Right-click Ledge.app and choose Open, then confirm. On newer versions of macOS, open System Settings, go to Privacy &amp; Security, scroll down to the note about Ledge being blocked, and click Open Anyway.</span></li>
-        <li><strong>Look for the tray icon in your menu bar.</strong>
-          <span>From its menu you can turn on Start at Login, clipboard collecting, and pick your shelf position. Then drag any file to see the shelf appear.</span></li>
-      </ol>
+      <h3 style="font-size:18px;">Option 1: Terminal install, no warnings at all</h3>
+      <p style="color:var(--muted); font-size:14.5px; margin-top:6px;">Paste this one line into Terminal (find it in Applications &gt; Utilities). It downloads Ledge, puts it in Applications, clears the safety flag, and launches it.</p>
+      <div class="cmdblock">curl -fsSL -o /tmp/Ledge.zip https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip &amp;&amp; ditto -xk /tmp/Ledge.zip /Applications &amp;&amp; xattr -dr com.apple.quarantine /Applications/Ledge.app &amp;&amp; open /Applications/Ledge.app</div>
+    </div>
+
+    <div class="install" style="margin-top:18px;">
+      <h3 style="font-size:18px;">Option 2: Download normally, then approve it once</h3>
+      <div class="installgrid">
+        <ol>
+          <li><strong>Download and unzip.</strong>
+            <span>Grab <a href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip" style="color:var(--accent-2)">Ledge.zip</a> and double-click it. You get Ledge.app.</span></li>
+          <li><strong>Drag Ledge.app into Applications.</strong></li>
+          <li><strong>Open it. You'll see the warning shown here.</strong>
+            <span>Click <strong style="color:var(--text)">Done</strong>. Not "Move to Trash". This is macOS being cautious about any app that isn't in its paid developer registry, not a malware detection.</span></li>
+          <li><strong>Approve it in System Settings.</strong>
+            <span>Open System Settings, go to Privacy &amp; Security, scroll to the bottom. You'll see "Ledge was blocked". Click <strong style="color:var(--text)">Open Anyway</strong>, then confirm.</span></li>
+          <li><strong>Done. Look for the tray icon in your menu bar.</strong>
+            <span>Turn on Start at Login from its menu, then drag any file to see the shelf appear. The warning never comes back.</span></li>
+        </ol>
+        <div class="gatemock" aria-hidden="true">
+          <div class="house">&#127968;</div>
+          <h4>"Ledge" Not Opened</h4>
+          <p>Apple could not verify "Ledge" is free of malware that may harm your Mac or compromise your privacy.</p>
+          <div class="b trash">Move to Trash</div>
+          <div class="b done">Done</div>
+        </div>
+      </div>
       <div class="callout">
-        <strong>Why does macOS warn me?</strong> Ledge is free and isn't notarized through Apple's paid developer program, so Gatekeeper shows a caution for the first launch. The full source code is public on <a href="https://github.com/marcotteink/ledge" style="color:var(--accent-2)">GitHub</a> so you can see exactly what it does, or build it yourself with two commands. If you prefer the terminal, this clears the warning: <code>xattr -d com.apple.quarantine /Applications/Ledge.app</code>
+        <strong>Why does this happen?</strong> Apple charges $99/year for the developer program that removes this warning, and Ledge is a free tool. The trade is one extra approval step. If you'd rather trust nothing but your own eyes, the full source code is on <a href="https://github.com/marcotteink/ledge" style="color:var(--accent-2)">GitHub</a> and you can build it yourself with <code>./build.sh</code>.
       </div>
     </div>
   </section>

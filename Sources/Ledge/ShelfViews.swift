@@ -1,7 +1,34 @@
 import AppKit
+import QuickLookThumbnailing
 
 final class FlippedView: NSView {
     override var isFlipped: Bool { true }
+}
+
+/// Generates and caches QuickLook thumbnails so images show their actual
+/// picture on the shelf, PDFs show their first page, and anything without a
+/// preview keeps its file-type icon.
+enum Thumbnails {
+    private static let cache = NSCache<NSString, NSImage>()
+
+    static func request(for url: URL, size: CGFloat, completion: @escaping (NSImage) -> Void) {
+        let key = "\(url.path)|\(Int(size))" as NSString
+        if let cached = cache.object(forKey: key) {
+            completion(cached)
+            return
+        }
+        let request = QLThumbnailGenerator.Request(
+            fileAt: url,
+            size: CGSize(width: size, height: size),
+            scale: NSScreen.main?.backingScaleFactor ?? 2,
+            representationTypes: .thumbnail
+        )
+        QLThumbnailGenerator.shared.generateBestRepresentation(for: request) { rep, _ in
+            guard let image = rep?.nsImage else { return }
+            cache.setObject(image, forKey: key)
+            DispatchQueue.main.async { completion(image) }
+        }
+    }
 }
 
 /// Buttons inside the shelf must respond even though the panel never becomes key.
@@ -59,6 +86,7 @@ final class ItemRowView: NSView, NSDraggingSource {
     private weak var controller: ShelfController?
     private var mouseDownEvent: NSEvent?
     private let removeButton: FirstMouseButton
+    private let iconView = NSImageView()
     private var trackingArea: NSTrackingArea?
 
     init(item: ShelfItem, controller: ShelfController) {
@@ -77,13 +105,22 @@ final class ItemRowView: NSView, NSDraggingSource {
         layer?.cornerRadius = 10
         toolTip = item.path
 
-        let iconView = NSImageView()
         let icon = NSWorkspace.shared.icon(forFile: item.path)
         icon.size = NSSize(width: metrics.iconSize, height: metrics.iconSize)
         iconView.image = icon
+        iconView.imageScaling = .scaleProportionallyUpOrDown
+        iconView.wantsLayer = true
+        iconView.layer?.cornerRadius = 4
+        iconView.layer?.masksToBounds = true
         iconView.translatesAutoresizingMaskIntoConstraints = false
         iconView.widthAnchor.constraint(equalToConstant: metrics.iconSize).isActive = true
         iconView.heightAnchor.constraint(equalToConstant: metrics.iconSize).isActive = true
+
+        // Swap in a real preview (image contents, PDF first page) when
+        // QuickLook can make one; otherwise the file-type icon stays.
+        Thumbnails.request(for: item.url, size: metrics.iconSize) { [weak iconView] thumb in
+            iconView?.image = thumb
+        }
 
         let name = NSTextField(labelWithString: item.displayName)
         name.font = .systemFont(ofSize: 12, weight: .medium)
@@ -214,12 +251,16 @@ final class ItemRowView: NSView, NSDraggingSource {
 
     private func startDrag(with event: NSEvent) {
         let dragItem = NSDraggingItem(pasteboardWriter: item.url as NSURL)
-        let icon = NSWorkspace.shared.icon(forFile: item.path)
-        icon.size = NSSize(width: 48, height: 48)
+        let dragImage: NSImage
+        if let current = iconView.image {
+            dragImage = current
+        } else {
+            dragImage = NSWorkspace.shared.icon(forFile: item.path)
+        }
         let p = convert(event.locationInWindow, from: nil)
         dragItem.setDraggingFrame(
             NSRect(x: p.x - 24, y: p.y - 24, width: 48, height: 48),
-            contents: icon
+            contents: dragImage
         )
         beginDraggingSession(with: [dragItem], event: event, source: self)
     }

@@ -12,13 +12,19 @@ entirely on your machine.
 
 **[Website and install guide](https://marcotteink.github.io/ledge/)**
 
-First launch: Ledge is not notarized through Apple's paid developer program,
-so right-click the app and choose Open (or use System Settings > Privacy &
-Security > Open Anyway). Or clear the flag in Terminal:
+## Installing
+
+Fastest path, no Gatekeeper warnings. Paste into Terminal:
 
 ```
-xattr -d com.apple.quarantine /Applications/Ledge.app
+curl -fsSL -o /tmp/Ledge.zip https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip && ditto -xk /tmp/Ledge.zip /Applications && xattr -dr com.apple.quarantine /Applications/Ledge.app && open /Applications/Ledge.app
 ```
+
+If you download normally instead: Ledge is not notarized through Apple's paid
+developer program, so the first launch shows "Apple could not verify Ledge is
+free of malware." Click Done (not Move to Trash), then open System Settings >
+Privacy & Security, scroll to the bottom, and click Open Anyway. The warning
+never comes back.
 
 ## How it works
 
