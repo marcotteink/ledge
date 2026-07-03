@@ -1,0 +1,436 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Ledge: a free drag-and-drop shelf for your Mac</title>
+<meta name="description" content="Ledge is a free, open source drag-and-drop shelf for macOS. Start dragging a file and a shelf appears. Park files, collect clipboard copies, and drag them out wherever you need them.">
+<meta property="og:title" content="Ledge: a free drag-and-drop shelf for your Mac">
+<meta property="og:description" content="Start dragging a file and a shelf appears. Park files, collect clipboard copies, and drag them out wherever you need them. Free and open source.">
+<meta property="og:image" content="https://marcotteink.github.io/ledge/icon.png">
+<meta property="og:type" content="website">
+<link rel="icon" type="image/png" href="icon.png">
+<style>
+  :root {
+    --bg: #070b16;
+    --bg-2: #0b1224;
+    --card: rgba(255,255,255,0.045);
+    --card-border: rgba(255,255,255,0.09);
+    --text: #e8edf7;
+    --muted: #93a0b8;
+    --accent: #3b82f6;
+    --accent-2: #60a5fa;
+    --radius: 16px;
+  }
+  * { margin: 0; padding: 0; box-sizing: border-box; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "SF Pro Text", "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    line-height: 1.6;
+    overflow-x: hidden;
+  }
+  .glow {
+    position: fixed; inset: 0; pointer-events: none; z-index: 0;
+    background:
+      radial-gradient(600px 400px at 75% -50px, rgba(59,130,246,0.22), transparent 70%),
+      radial-gradient(700px 500px at 15% 30%, rgba(37,99,235,0.10), transparent 70%);
+  }
+  .wrap { position: relative; z-index: 1; max-width: 1060px; margin: 0 auto; padding: 0 24px; }
+
+  nav {
+    display: flex; align-items: center; justify-content: space-between;
+    padding: 22px 0;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 18px; letter-spacing: 0.2px; }
+  .brand img { width: 34px; height: 34px; border-radius: 8px; }
+  .nav-links { display: flex; align-items: center; gap: 18px; }
+  .nav-links a.gh { color: var(--muted); text-decoration: none; font-size: 14px; display: flex; align-items: center; gap: 6px; }
+  .nav-links a.gh:hover { color: var(--text); }
+
+  .btn {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent));
+    color: #fff; text-decoration: none; font-weight: 600; font-size: 15px;
+    padding: 11px 22px; border-radius: 999px;
+    box-shadow: 0 8px 24px rgba(59,130,246,0.35);
+    transition: transform .15s ease, box-shadow .15s ease;
+  }
+  .btn:hover { transform: translateY(-1px); box-shadow: 0 12px 32px rgba(59,130,246,0.45); }
+  .btn.secondary {
+    background: var(--card); color: var(--text); box-shadow: none;
+    border: 1px solid var(--card-border);
+  }
+  .btn.small { padding: 8px 16px; font-size: 14px; }
+
+  header.hero { text-align: center; padding: 64px 0 24px; }
+  .hero h1 {
+    font-size: clamp(38px, 6vw, 64px); line-height: 1.08; font-weight: 800; letter-spacing: -1.5px;
+  }
+  .hero h1 span {
+    background: linear-gradient(90deg, var(--accent-2), #a5c8ff);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p.sub { max-width: 620px; margin: 20px auto 0; color: var(--muted); font-size: 19px; }
+  .hero .cta { margin-top: 34px; display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .hero .meta { margin-top: 16px; color: var(--muted); font-size: 13px; }
+
+  /* ---- animated demo ---- */
+  .demo {
+    margin: 56px auto 0; max-width: 860px; height: 380px; position: relative;
+    background: linear-gradient(180deg, #0d1428, #0a0f20);
+    border: 1px solid var(--card-border); border-radius: 20px; overflow: hidden;
+  }
+  .demo .menubar {
+    height: 28px; background: rgba(255,255,255,0.05); border-bottom: 1px solid rgba(255,255,255,0.05);
+    display: flex; align-items: center; padding: 0 14px; gap: 6px;
+  }
+  .demo .menubar .dot { width: 9px; height: 9px; border-radius: 50%; background: rgba(255,255,255,0.14); }
+  .demo .finder {
+    position: absolute; left: 6%; top: 70px; width: 320px; height: 220px;
+    background: rgba(255,255,255,0.05); border: 1px solid rgba(255,255,255,0.09);
+    border-radius: 12px; padding: 40px 18px 18px;
+  }
+  .demo .finder::before {
+    content: "Downloads"; position: absolute; top: 10px; left: 16px;
+    font-size: 12px; color: var(--muted); font-weight: 600;
+  }
+  .demo .finder .grid { display: flex; gap: 22px; flex-wrap: wrap; }
+  .ghostfile { width: 58px; text-align: center; opacity: 0.5; }
+  .ghostfile .doc { width: 44px; height: 54px; margin: 0 auto; border-radius: 7px; background: rgba(255,255,255,0.12); position: relative; }
+  .ghostfile .doc::after { content: ""; position: absolute; right: 0; top: 0; border-style: solid; border-width: 0 14px 14px 0; border-color: transparent var(--bg-2) transparent transparent; }
+  .ghostfile label { font-size: 10px; color: var(--muted); display: block; margin-top: 6px; }
+
+  .flyfile {
+    position: absolute; left: 12%; top: 120px; width: 58px; z-index: 5;
+    animation: fly 7s ease-in-out infinite;
+  }
+  .flyfile .doc {
+    width: 44px; height: 54px; margin: 0 auto; border-radius: 7px;
+    background: linear-gradient(180deg, #7fb0ff, #4d86e8); position: relative;
+    box-shadow: 0 10px 24px rgba(0,0,0,0.4);
+  }
+  .flyfile .doc::after { content: ""; position: absolute; right: 0; top: 0; border-style: solid; border-width: 0 14px 14px 0; border-color: transparent #0a0f20 transparent transparent; }
+  .flyfile label { font-size: 10px; color: #cfe0ff; display: block; margin-top: 6px; text-align: center; }
+
+  .shelfmock {
+    position: absolute; right: 4%; top: 64px; width: 210px; z-index: 4;
+    background: rgba(24,32,54,0.92); border: 1px solid rgba(255,255,255,0.13);
+    border-radius: 14px; padding: 10px 10px 12px;
+    box-shadow: 0 24px 60px rgba(0,0,0,0.5);
+    animation: shelfin 7s ease-in-out infinite;
+  }
+  .shelfmock .head { display: flex; justify-content: space-between; align-items: center; padding: 0 4px 8px; }
+  .shelfmock .head span { font-size: 11px; font-weight: 700; color: var(--muted); }
+  .shelfmock .head .gear { width: 12px; height: 12px; border-radius: 50%; border: 2px dotted var(--muted); opacity: 0.7; }
+  .shelfmock .slot {
+    border: 1.5px dashed rgba(255,255,255,0.22); border-radius: 10px;
+    height: 52px; display: flex; align-items: center; justify-content: center;
+    color: var(--muted); font-size: 11px;
+    animation: slotfade 7s ease-in-out infinite;
+  }
+  .shelfmock .row {
+    position: absolute; left: 10px; right: 10px; top: 38px;
+    background: rgba(255,255,255,0.07); border-radius: 10px; height: 52px;
+    display: flex; align-items: center; gap: 9px; padding: 0 10px;
+    opacity: 0; animation: rowin 7s ease-in-out infinite;
+  }
+  .shelfmock .row .mini { width: 26px; height: 32px; border-radius: 4px; background: linear-gradient(180deg, #7fb0ff, #4d86e8); flex-shrink: 0; }
+  .shelfmock .row .lines { flex: 1; }
+  .shelfmock .row .lines i { display: block; height: 7px; border-radius: 4px; background: rgba(255,255,255,0.25); margin: 4px 0; }
+  .shelfmock .row .lines i:last-child { width: 55%; background: rgba(255,255,255,0.12); }
+
+  .demo .caption {
+    position: absolute; bottom: 14px; left: 0; right: 0; text-align: center;
+    font-size: 13px; color: var(--muted);
+  }
+
+  @keyframes fly {
+    0%, 12%   { transform: translate(0, 0) scale(1); opacity: 1; }
+    18%       { transform: translate(10px, -14px) scale(1.06); }
+    52%       { transform: translate(470px, -22px) scale(1.06); opacity: 1; }
+    60%, 100% { transform: translate(490px, -10px) scale(0.4); opacity: 0; }
+  }
+  @keyframes shelfin {
+    0%, 13%  { opacity: 0; transform: translateX(24px); }
+    22%, 92% { opacity: 1; transform: translateX(0); }
+    100%     { opacity: 0; transform: translateX(24px); }
+  }
+  @keyframes slotfade {
+    0%, 55% { opacity: 1; }
+    62%, 100% { opacity: 0; }
+  }
+  @keyframes rowin {
+    0%, 56% { opacity: 0; transform: scale(0.8); }
+    64%, 90% { opacity: 1; transform: scale(1); }
+    100% { opacity: 0; }
+  }
+  @media (prefers-reduced-motion: reduce) {
+    .flyfile, .shelfmock, .shelfmock .slot, .shelfmock .row { animation: none; }
+    .shelfmock { opacity: 1; }
+    .shelfmock .slot { opacity: 0; }
+    .shelfmock .row { opacity: 1; }
+    .flyfile { opacity: 0; }
+  }
+
+  section { padding: 72px 0 0; }
+  .kicker { color: var(--accent-2); font-weight: 700; font-size: 13px; text-transform: uppercase; letter-spacing: 1.5px; }
+  h2 { font-size: clamp(26px, 4vw, 36px); font-weight: 800; letter-spacing: -0.8px; margin-top: 8px; }
+  .lede { color: var(--muted); max-width: 640px; margin-top: 10px; }
+
+  .steps { display: grid; grid-template-columns: repeat(3, 1fr); gap: 18px; margin-top: 36px; }
+  .step {
+    background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+    padding: 26px 22px;
+  }
+  .step .num {
+    width: 34px; height: 34px; border-radius: 10px; display: flex; align-items: center; justify-content: center;
+    background: linear-gradient(180deg, var(--accent-2), var(--accent)); font-weight: 800; font-size: 15px;
+    margin-bottom: 14px;
+  }
+  .step h3 { font-size: 17px; margin-bottom: 6px; }
+  .step p { color: var(--muted); font-size: 14.5px; }
+
+  .grid { display: grid; grid-template-columns: repeat(4, 1fr); gap: 16px; margin-top: 36px; }
+  .feature {
+    background: var(--card); border: 1px solid var(--card-border); border-radius: var(--radius);
+    padding: 22px 20px; transition: border-color .2s ease, transform .2s ease;
+  }
+  .feature:hover { border-color: rgba(96,165,250,0.45); transform: translateY(-2px); }
+  .feature .ico { font-size: 22px; margin-bottom: 10px; display: block; }
+  .feature h3 { font-size: 15px; margin-bottom: 5px; }
+  .feature p { color: var(--muted); font-size: 13.5px; line-height: 1.5; }
+
+  .install {
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 20px;
+    padding: 36px; margin-top: 36px;
+  }
+  .install ol { margin: 18px 0 0 20px; }
+  .install li { margin-bottom: 14px; color: var(--text); }
+  .install li span { color: var(--muted); display: block; font-size: 14px; }
+  .callout {
+    margin-top: 22px; border-left: 3px solid var(--accent);
+    background: rgba(59,130,246,0.08); border-radius: 0 12px 12px 0;
+    padding: 16px 18px; font-size: 14.5px; color: var(--muted);
+  }
+  .callout strong { color: var(--text); }
+  code {
+    background: rgba(255,255,255,0.08); border: 1px solid var(--card-border);
+    padding: 2px 7px; border-radius: 6px; font-size: 13px;
+    font-family: "SF Mono", ui-monospace, Menlo, monospace;
+  }
+
+  table { width: 100%; border-collapse: collapse; margin-top: 30px; font-size: 14.5px; }
+  th, td { text-align: left; padding: 12px 14px; border-bottom: 1px solid var(--card-border); }
+  th { color: var(--muted); font-size: 12px; text-transform: uppercase; letter-spacing: 1px; }
+  td:first-child { font-weight: 600; white-space: nowrap; }
+  td:last-child { color: var(--muted); }
+
+  details {
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 12px;
+    padding: 16px 20px; margin-top: 12px;
+  }
+  details summary { cursor: pointer; font-weight: 600; font-size: 15px; }
+  details p { color: var(--muted); font-size: 14.5px; margin-top: 10px; }
+
+  .bottom-cta { text-align: center; padding: 88px 0 40px; }
+  .bottom-cta h2 { margin-bottom: 18px; }
+
+  footer {
+    border-top: 1px solid var(--card-border); margin-top: 40px;
+    padding: 28px 0 40px; display: flex; justify-content: space-between; align-items: center;
+    color: var(--muted); font-size: 13.5px; flex-wrap: wrap; gap: 10px;
+  }
+  footer a { color: var(--muted); }
+  footer a:hover { color: var(--text); }
+
+  @media (max-width: 860px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+    .steps { grid-template-columns: 1fr; }
+    .demo { height: 420px; }
+    .demo .finder { width: 62%; }
+    .flyfile { animation-name: flymobile; }
+    @keyframes flymobile {
+      0%, 12%   { transform: translate(0, 0) scale(1); opacity: 1; }
+      18%       { transform: translate(6px, -10px) scale(1.06); }
+      52%       { transform: translate(56vw, -18px) scale(1.06); opacity: 1; }
+      60%, 100% { transform: translate(58vw, -8px) scale(0.4); opacity: 0; }
+    }
+  }
+  @media (max-width: 540px) {
+    .grid { grid-template-columns: 1fr; }
+    footer { flex-direction: column; text-align: center; }
+  }
+</style>
+</head>
+<body>
+<div class="glow"></div>
+<div class="wrap">
+
+  <nav>
+    <div class="brand"><img src="icon.png" alt="Ledge icon"> Ledge</div>
+    <div class="nav-links">
+      <a class="gh" href="https://github.com/marcotteink/ledge">
+        <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
+        Source
+      </a>
+      <a class="btn small" href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip">Download</a>
+    </div>
+  </nav>
+
+  <header class="hero">
+    <h1>A shelf for your files,<br><span>right when you need it.</span></h1>
+    <p class="sub">Ledge is a free drag-and-drop shelf for macOS. Start dragging a file and a shelf appears at the edge of your screen. Park things there, then drag them out wherever they need to go. No more window juggling.</p>
+    <div class="cta">
+      <a class="btn" href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip">
+        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12L3 7h3V1h4v6h3L8 12zm-6 2h12v2H2v-2z"/></svg>
+        Download for Mac
+      </a>
+      <a class="btn secondary" href="https://github.com/marcotteink/ledge">View on GitHub</a>
+    </div>
+    <p class="meta">Free forever. Open source. macOS 13 or later, Apple Silicon and Intel. About 0.5 MB.</p>
+  </header>
+
+  <div class="demo" aria-hidden="true">
+    <div class="menubar"><div class="dot"></div><div class="dot"></div><div class="dot"></div></div>
+    <div class="finder">
+      <div class="grid" style="display:flex; gap:22px;">
+        <div class="ghostfile"><div class="doc"></div><label>report.pdf</label></div>
+        <div class="ghostfile"><div class="doc"></div><label>notes.txt</label></div>
+        <div class="ghostfile"><div class="doc"></div><label>photo.png</label></div>
+      </div>
+    </div>
+    <div class="flyfile"><div class="doc"></div><label>logo.png</label></div>
+    <div class="shelfmock">
+      <div class="head"><span>Ledge</span><div class="gear"></div></div>
+      <div class="slot">Drop files here</div>
+      <div class="row"><div class="mini"></div><div class="lines"><i></i><i></i></div></div>
+    </div>
+    <div class="caption">Drag a file and the shelf appears. Drop it, go find where it belongs, drag it out.</div>
+  </div>
+
+  <section id="how">
+    <p class="kicker">How it works</p>
+    <h2>Three moves. That's the whole app.</h2>
+    <div class="steps">
+      <div class="step">
+        <div class="num">1</div>
+        <h3>Start dragging</h3>
+        <p>Pick up any file, image, or text selection. Ledge notices and fades in at the edge of your screen, ready to catch it.</p>
+      </div>
+      <div class="step">
+        <div class="num">2</div>
+        <h3>Drop it on the shelf</h3>
+        <p>Your item parks safely on the shelf. Stack as many as you want. They stay put, even across restarts.</p>
+      </div>
+      <div class="step">
+        <div class="num">3</div>
+        <h3>Drag it back out</h3>
+        <p>Find the folder, email, or app where it belongs, then drag the item off the shelf. It lands there and clears itself from the shelf.</p>
+      </div>
+    </div>
+  </section>
+
+  <section id="features">
+    <p class="kicker">Features</p>
+    <h2>Small app. Big quality of life.</h2>
+    <div class="grid">
+      <div class="feature"><span class="ico">&#10024;</span><h3>Appears when you need it</h3><p>The shelf only shows up while you are dragging or holding items. The rest of the time it stays out of your way.</p></div>
+      <div class="feature"><span class="ico">&#128203;</span><h3>Clipboard collector</h3><p>Flip one toggle and every copy you make stacks up on the shelf. Copy five things in a row, paste them anywhere, in any order.</p></div>
+      <div class="feature"><span class="ico">&#128241;</span><h3>Import from iPhone</h3><p>Snap a photo or scan a document with your iPhone and it lands straight on the shelf, via Apple Continuity Camera.</p></div>
+      <div class="feature"><span class="ico">&#9000;</span><h3>F5 from anywhere</h3><p>One key shows or hides the shelf in any app. No clicking around to find it.</p></div>
+      <div class="feature"><span class="ico">&#8634;</span><h3>Bring things back</h3><p>Removed something too soon? One click restores your last removed files. Ledge remembers your last ten removals.</p></div>
+      <div class="feature"><span class="ico">&#128209;</span><h3>Your shelf, your spot</h3><p>Park it on the left or right edge, top, middle, or bottom, or have it appear at your pointer. Three sizes.</p></div>
+      <div class="feature"><span class="ico">&#128274;</span><h3>Private by design</h3><p>No account, no network calls, no analytics. Everything stays in a local folder on your Mac. Concealed clipboard data from password managers is never captured.</p></div>
+      <div class="feature"><span class="ico">&#128150;</span><h3>Free and open source</h3><p>MIT licensed. Read every line of code, build it yourself, or grab the download. No trial, no upsell.</p></div>
+    </div>
+  </section>
+
+  <section id="install">
+    <p class="kicker">Install</p>
+    <h2>Up and running in a minute.</h2>
+    <div class="install">
+      <ol>
+        <li><strong>Download and unzip.</strong>
+          <span>Grab <a href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip" style="color:var(--accent-2)">Ledge.zip</a> and double-click it. You get Ledge.app.</span></li>
+        <li><strong>Move Ledge.app to your Applications folder.</strong>
+          <span>Just drag it in.</span></li>
+        <li><strong>First launch: tell macOS it's OK.</strong>
+          <span>Right-click Ledge.app and choose Open, then confirm. On newer versions of macOS, open System Settings, go to Privacy &amp; Security, scroll down to the note about Ledge being blocked, and click Open Anyway.</span></li>
+        <li><strong>Look for the tray icon in your menu bar.</strong>
+          <span>From its menu you can turn on Start at Login, clipboard collecting, and pick your shelf position. Then drag any file to see the shelf appear.</span></li>
+      </ol>
+      <div class="callout">
+        <strong>Why does macOS warn me?</strong> Ledge is free and isn't notarized through Apple's paid developer program, so Gatekeeper shows a caution for the first launch. The full source code is public on <a href="https://github.com/marcotteink/ledge" style="color:var(--accent-2)">GitHub</a> so you can see exactly what it does, or build it yourself with two commands. If you prefer the terminal, this clears the warning: <code>xattr -d com.apple.quarantine /Applications/Ledge.app</code>
+      </div>
+    </div>
+  </section>
+
+  <section id="use">
+    <p class="kicker">Cheat sheet</p>
+    <h2>Everything Ledge responds to.</h2>
+    <table>
+      <tr><th>Action</th><th>What happens</th></tr>
+      <tr><td>Drag a file anywhere</td><td>Shelf fades in at the screen edge, ready for a drop</td></tr>
+      <tr><td>Drop on the shelf</td><td>Item is parked. Any part of the shelf accepts the drop</td></tr>
+      <tr><td>Drag an item off the shelf</td><td>Copies to the destination and clears from the shelf</td></tr>
+      <tr><td>Double-click an item</td><td>Opens the file</td></tr>
+      <tr><td>Hover an item, click the x</td><td>Removes it (recoverable with Bring Back)</td></tr>
+      <tr><td>F5 (or Fn F5)</td><td>Show or hide the shelf from any app</td></tr>
+      <tr><td>Gear icon or right-click the shelf</td><td>Opens the full menu</td></tr>
+      <tr><td>Drag the shelf header</td><td>Moves the shelf anywhere on screen</td></tr>
+      <tr><td>Copy anything (with clipboard collecting on)</td><td>Lands on the shelf silently as a new item</td></tr>
+    </table>
+  </section>
+
+  <section id="faq">
+    <p class="kicker">FAQ</p>
+    <h2>Questions people ask.</h2>
+    <details>
+      <summary>Is it really free?</summary>
+      <p>Yes. Free forever, MIT licensed, no trial, no locked features, no account. It was built to replace a paid app and is shared in that same spirit.</p>
+    </details>
+    <details>
+      <summary>Where does my stuff live?</summary>
+      <p>Items you drop stay wherever they already are on disk; the shelf just holds a reference. Text snippets, clipboard images, and iPhone imports are stored in a local folder at ~/Library/Application Support/Ledge. Nothing ever leaves your Mac.</p>
+    </details>
+    <details>
+      <summary>Does it need any special permissions?</summary>
+      <p>No. Ledge doesn't ask for Accessibility, Screen Recording, or anything else. Drag detection uses the standard system pasteboard, which needs no permission at all.</p>
+    </details>
+    <details>
+      <summary>What about sensitive things I copy?</summary>
+      <p>Clipboard collecting is off by default. When it's on, anything a password manager marks as concealed or transient is skipped automatically. You can toggle collecting off any time from the menu.</p>
+    </details>
+    <details>
+      <summary>The shelf pops up when I drag text and I don't want that.</summary>
+      <p>Open the Ledge menu and uncheck "Show Shelf for Text Drags." File drags will still summon the shelf.</p>
+    </details>
+    <details>
+      <summary>How do I uninstall?</summary>
+      <p>Quit Ledge from its menu, delete Ledge.app from Applications, and remove the ~/Library/Application Support/Ledge folder. That's everything.</p>
+    </details>
+    <details>
+      <summary>Can I build it from source?</summary>
+      <p>Yes. Clone the repo, run ./build.sh, and open dist/Ledge.app. You need the Xcode Command Line Tools, nothing else. The whole app is a small Swift package.</p>
+    </details>
+  </section>
+
+  <div class="bottom-cta">
+    <h2>Give your drags a place to land.</h2>
+    <a class="btn" href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip">
+      <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12L3 7h3V1h4v6h3L8 12zm-6 2h12v2H2v-2z"/></svg>
+      Download Ledge, free
+    </a>
+    <p style="color:var(--muted); font-size:13px; margin-top:14px;">macOS 13 or later. Universal for Apple Silicon and Intel.</p>
+  </div>
+
+  <footer>
+    <div>Made by <a href="https://marcotte.ink">Matt Marcotte</a>. MIT licensed.</div>
+    <div><a href="https://github.com/marcotteink/ledge">GitHub</a> &nbsp;&middot;&nbsp; <a href="https://github.com/marcotteink/ledge/issues">Report an issue</a></div>
+  </footer>
+
+</div>
+</body>
+</html>
