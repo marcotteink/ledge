@@ -380,9 +380,23 @@
       60%, 100% { transform: translate(58vw, -8px) scale(0.4); opacity: 0; }
     }
   }
+  .dl-form { display: inline-flex; gap: 10px; flex-wrap: wrap; }
+  .dl-form input[type="email"] {
+    background: rgba(255,255,255,0.06); border: 1px solid rgba(255,255,255,0.16);
+    color: var(--text); font-size: 15px; padding: 11px 18px; border-radius: 999px;
+    min-width: 230px; outline: none; transition: border-color .15s ease;
+  }
+  .dl-form input[type="email"]::placeholder { color: var(--muted); }
+  .dl-form input[type="email"]:focus { border-color: var(--accent-2); }
+  .dl-form .btn { cursor: pointer; border: 0; font-family: inherit; }
+  .dl-msg { display: none; font-size: 14.5px; margin-top: 12px; }
+  .dl-msg.show { display: block; }
+  .dl-msg.ok { color: var(--accent-2); }
+  .dl-msg.err { color: #f87171; }
   @media (max-width: 540px) {
     .grid { grid-template-columns: 1fr; }
     footer { flex-direction: column; text-align: center; }
+    .dl-form, .dl-form input[type="email"], .dl-form .btn { width: 100%; justify-content: center; }
   }
 </style>
 </head>
@@ -397,21 +411,25 @@
         <svg width="17" height="17" viewBox="0 0 16 16" fill="currentColor"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27s1.36.09 2 .27c1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.01 8.01 0 0 0 16 8c0-4.42-3.58-8-8-8z"/></svg>
         Source
       </a>
-      <a class="btn small" href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip">Download</a>
+      <a class="btn small" href="#get">Download</a>
     </div>
   </nav>
 
   <header class="hero">
     <h1>A shelf for your files,<br><span>right when you need it.</span></h1>
     <p class="sub">Ledge is a free drag-and-drop shelf for macOS. Start dragging a file and a shelf appears at the edge of your screen. Park things there, then drag them out wherever they need to go. No more window juggling.</p>
-    <div class="cta">
-      <a class="btn" href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip">
-        <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12L3 7h3V1h4v6h3L8 12zm-6 2h12v2H2v-2z"/></svg>
-        Download for Mac
-      </a>
+    <div class="cta" id="get">
+      <form class="dl-form" action="https://app.kit.com/forms/KIT_FORM_ID/subscriptions" method="post">
+        <input type="email" name="email_address" placeholder="you@email.com" required aria-label="Email address">
+        <button class="btn" type="submit">
+          <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12L3 7h3V1h4v6h3L8 12zm-6 2h12v2H2v-2z"/></svg>
+          Email me the download
+        </button>
+      </form>
       <a class="btn secondary" href="https://github.com/marcotteink/ledge">View on GitHub</a>
     </div>
-    <p class="meta">Free forever. Open source. macOS 13 or later, Apple Silicon and Intel. About 0.5 MB.</p>
+    <p class="dl-msg" role="status"></p>
+    <p class="meta">Free forever. Open source. macOS 13 or later, Apple Silicon and Intel. About 0.5 MB. We email you the download link plus occasional update notes. Unsubscribe anytime.</p>
   </header>
 
   <div class="demo" aria-hidden="true">
@@ -577,8 +595,8 @@
 
     <div class="install">
       <h3 style="font-size:18px;">Option 1: Terminal install, no warnings at all</h3>
-      <p style="color:var(--muted); font-size:14.5px; margin-top:6px;">Paste this one line into Terminal (find it in Applications &gt; Utilities). It downloads Ledge, puts it in Applications, clears the safety flag, and launches it.</p>
-      <div class="cmdblock">curl -fsSL -o /tmp/Ledge.zip https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip &amp;&amp; ditto -xk /tmp/Ledge.zip /Applications &amp;&amp; xattr -dr com.apple.quarantine /Applications/Ledge.app &amp;&amp; open /Applications/Ledge.app</div>
+      <p style="color:var(--muted); font-size:14.5px; margin-top:6px;">Once Ledge.zip from your email lands in Downloads, paste this one line into Terminal (find it in Applications &gt; Utilities). It puts Ledge in Applications, clears the safety flag, and launches it.</p>
+      <div class="cmdblock">ditto -xk ~/Downloads/Ledge.zip /Applications &amp;&amp; xattr -dr com.apple.quarantine /Applications/Ledge.app &amp;&amp; open /Applications/Ledge.app</div>
     </div>
 
     <div class="install" style="margin-top:18px;">
@@ -586,7 +604,7 @@
       <div class="installgrid">
         <ol>
           <li><strong>Download and unzip.</strong>
-            <span>Grab <a href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip" style="color:var(--accent-2)">Ledge.zip</a> and double-click it. You get Ledge.app.</span></li>
+            <span><a href="#get" style="color:var(--accent-2)">Enter your email up top</a> and we'll send you Ledge.zip. Double-click it. You get Ledge.app.</span></li>
           <li><strong>Drag Ledge.app into Applications.</strong></li>
           <li><strong>Open it. You'll see the warning shown here.</strong>
             <span>Click <strong style="color:var(--text)">Done</strong>. Not "Move to Trash". This is macOS being cautious about any app that isn't in its paid developer registry, not a malware detection.</span></li>
@@ -704,7 +722,7 @@
 
   <div class="bottom-cta">
     <h2>Give your drags a place to land.</h2>
-    <a class="btn" href="https://github.com/marcotteink/ledge/releases/latest/download/Ledge.zip">
+    <a class="btn" href="#get">
       <svg width="16" height="16" viewBox="0 0 16 16" fill="currentColor"><path d="M8 12L3 7h3V1h4v6h3L8 12zm-6 2h12v2H2v-2z"/></svg>
       Download Ledge, free
     </a>
@@ -717,5 +735,43 @@
   </footer>
 
 </div>
+<script>
+(function () {
+  var form = document.querySelector('.dl-form');
+  var msg = document.querySelector('.dl-msg');
+  if (!form) return;
+  form.addEventListener('submit', function (e) {
+    e.preventDefault();
+    var btn = form.querySelector('button');
+    var email = form.email_address.value.trim();
+    if (!email || email.indexOf('@') < 1 || email.indexOf('.', email.indexOf('@')) < 0) {
+      show('That email doesn’t look right. Give it another go.', false);
+      return;
+    }
+    btn.disabled = true; btn.style.opacity = 0.6;
+    fetch(form.action, { method: 'POST', body: new FormData(form), headers: { 'Accept': 'application/json' } })
+      .then(function (r) { if (!r.ok) throw new Error(r.status); return r.json(); })
+      .then(function (d) {
+        if (d && (d.status === 'success' || d.status === 'quarantined' || d.subscription)) {
+          form.style.display = 'none';
+          show('Check your inbox! Click the confirmation link we just sent and your download starts right away. Not there in a minute? Check spam.', true);
+        } else { throw new Error('unexpected'); }
+      })
+      .catch(function () {
+        form.submit();
+      })
+      .finally(function () { btn.disabled = false; btn.style.opacity = 1; });
+  });
+  document.querySelectorAll('a[href="#get"]').forEach(function (a) {
+    a.addEventListener('click', function () {
+      setTimeout(function () { form.email_address.focus(); }, 350);
+    });
+  });
+  function show(text, ok) {
+    msg.textContent = text;
+    msg.className = 'dl-msg show ' + (ok ? 'ok' : 'err');
+  }
+})();
+</script>
 </body>
 </html>
