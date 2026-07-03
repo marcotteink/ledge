@@ -464,6 +464,7 @@
       <div class="feature"><span class="ico">&#9000;</span><h3>F5 from anywhere</h3><p>One key shows or hides the shelf in any app. No clicking around to find it.</p></div>
       <div class="feature"><span class="ico">&#8634;</span><h3>Bring things back</h3><p>Removed something too soon? One click restores your last removed files. Ledge remembers your last ten removals.</p></div>
       <div class="feature"><span class="ico">&#128209;</span><h3>Your shelf, your spot</h3><p>Park it on the left or right edge, top, middle, or bottom, or have it appear at your pointer. Three sizes.</p></div>
+      <div class="feature"><span class="ico">&#9986;</span><h3>Move, not just copy</h3><p>Turn on move mode and dragging an item out removes the original from where it lived, so you file things away instead of duplicating them. Always recoverable from the Trash.</p></div>
       <div class="feature"><span class="ico">&#128274;</span><h3>Private by design</h3><p>No account, no network calls, no analytics. Everything stays in a local folder on your Mac. Concealed clipboard data from password managers is never captured.</p></div>
       <div class="feature"><span class="ico">&#128150;</span><h3>Free and open source</h3><p>MIT licensed. Read every line of code, build it yourself, or grab the download. No trial, no upsell.</p></div>
     </div>
@@ -493,6 +494,7 @@
           <div class="mi"><span class="lbl">Window Size</span><span class="k">&#8250;</span></div>
           <div class="mi"><span class="lbl">Show Ledge</span><span class="k">F5</span></div>
           <div class="sep"></div>
+          <div class="mi"><span class="lbl">Remove Original After Drag-Out</span></div>
           <div class="mi"><span class="chk">&#10003;</span><span class="lbl">Show Shelf for Text Drags</span></div>
           <div class="mi"><span class="chk">&#10003;</span><span class="lbl">Start at Login</span></div>
           <div class="sep"></div>
@@ -544,6 +546,13 @@
           <div>
             <h3>Show Ledge <span class="tag">F5</span></h3>
             <p>Summon or dismiss the shelf from any app with one keypress, even when it's empty and hidden. Great for parking something you'll need in a minute without reaching for the mouse.</p>
+          </div>
+        </div>
+        <div class="mrow">
+          <div class="mi-ico">&#9986;</div>
+          <div>
+            <h3>Remove Original After Drag-Out <span class="tag">move mode</span></h3>
+            <p>Off by default. Flip it on and dragging an item out becomes a true move, not a copy: the original leaves its old home so you don't end up with duplicates. Drops into Finder on the same drive move instantly; everywhere else, Ledge tidies up by sending the original to the Trash, so a mis-drop is always recoverable.</p>
           </div>
         </div>
         <div class="mrow">
@@ -633,7 +642,7 @@
       <tr><th>Action</th><th>What happens</th></tr>
       <tr><td>Drag a file anywhere</td><td>Shelf fades in at the screen edge, ready for a drop</td></tr>
       <tr><td>Drop on the shelf</td><td>Item is parked. Any part of the shelf accepts the drop</td></tr>
-      <tr><td>Drag an item off the shelf</td><td>Copies to the destination and clears from the shelf</td></tr>
+      <tr><td>Drag an item off the shelf</td><td>Copies to the destination and clears from the shelf (or moves it, with move mode on)</td></tr>
       <tr><td>Double-click an item</td><td>Opens the file</td></tr>
       <tr><td>Hover an item, click the x</td><td>Removes it (recoverable with Bring Back)</td></tr>
       <tr><td>F5 (or Fn F5)</td><td>Show or hide the shelf from any app</td></tr>
@@ -657,6 +666,10 @@
     <details>
       <summary>Where does my stuff live?</summary>
       <p>Items you drop stay wherever they already are on disk; the shelf just holds a reference. Text snippets, clipboard images, and iPhone imports are stored in a local folder at ~/Library/Application Support/Ledge. Nothing ever leaves your Mac.</p>
+    </details>
+    <details>
+      <summary>Can dragging out move a file instead of copying it?</summary>
+      <p>Yes. By default Ledge copies, leaving your original untouched. Turn on "Remove Original After Drag-Out" in the menu and it becomes a true move: the item leaves its old location so you don't get duplicates. Dropping onto Finder on the same drive is an instant, atomic move; other destinations receive a copy and Ledge then sends the original to the Trash a moment later. Because it goes to the Trash rather than being deleted, a mistaken drop is always recoverable.</p>
     </details>
     <details>
       <summary>Does it need any special permissions?</summary>

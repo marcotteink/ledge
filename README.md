@@ -73,6 +73,11 @@ never comes back.
   dictation or a media function instead, either hold Fn or enable
   "Use F1, F2, etc. keys as standard function keys" in System Settings >
   Keyboard.
+- **Remove Original After Drag-Out**: off by default. When on, dragging an
+  item out of Ledge moves it instead of copying: the original is sent to the
+  Trash so nothing is left behind. A same-volume drop into Finder is an
+  instant atomic move; other destinations copy and the original is trashed a
+  moment later (recoverable from the Trash).
 - **Show Shelf for Text Drags**: toggle whether dragging selected text pops
   the shelf.
 - **Start at Login**: registers the app as a login item (shown when running
@@ -92,7 +97,6 @@ enable "Start at Login" from the menu bar icon.
 
 ## Known limitations vs Yoink
 
-- Dragging out always copies (Yoink can move).
 - One item per drag out (no multi-select or drag-all handle yet).
 - The shelf returns to its configured position each time it appears; manual
   repositioning lasts only while it stays visible.

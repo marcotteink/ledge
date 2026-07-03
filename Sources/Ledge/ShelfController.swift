@@ -239,6 +239,43 @@ final class ShelfController: NSObject {
         dropView.setHighlighted(on)
     }
 
+    static let removeOriginalKey = "RemoveOriginalOnDragOut"
+
+    /// When on, dragging an item out of Ledge removes it from its original
+    /// location instead of leaving a copy behind.
+    var removeOriginalOnDragOut: Bool {
+        UserDefaults.standard.bool(forKey: Self.removeOriginalKey)
+    }
+
+    /// Called when a row was successfully dragged out to another app or Finder.
+    /// If move mode is on and the destination only made a copy, the original is
+    /// sent to the Trash so nothing is left behind. A .move drop already removed
+    /// the original, so we skip it. The original goes to the Trash (recoverable)
+    /// rather than being deleted outright.
+    func dragOutSucceeded(itemID: UUID, operation: NSDragOperation) {
+        if removeOriginalOnDragOut, operation != .move,
+           let item = items.first(where: { $0.id == itemID }) {
+            trashOriginal(item)
+        }
+        remove(itemID: itemID)
+    }
+
+    private func trashOriginal(_ item: ShelfItem) {
+        let url = item.url
+        // Delay briefly so a still-running copy at the destination finishes
+        // first. Moving to the Trash is a same-volume rename, so an open copy
+        // handle keeps working even if this fires mid-copy.
+        DispatchQueue.main.asyncAfter(deadline: .now() + 1.5) {
+            guard FileManager.default.fileExists(atPath: url.path) else { return }
+            do {
+                try FileManager.default.trashItem(at: url, resultingItemURL: nil)
+                NSLog("Ledge: moved original to Trash after drag-out: \(url.lastPathComponent)")
+            } catch {
+                NSLog("Ledge: could not trash original \(url.path): \(error)")
+            }
+        }
+    }
+
     func handleDrop(_ info: NSDraggingInfo) -> Bool {
         let pb = info.draggingPasteboard
 

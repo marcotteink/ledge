@@ -273,6 +273,12 @@ final class ItemRowView: NSView, NSDraggingSource {
 
     func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
         if context == .withinApplication { return [] }
+        // In move mode, offer move (preferred) and copy so a same-volume drop
+        // into Finder becomes an instant atomic move. Otherwise copy only, so
+        // the original always stays put.
+        if controller?.removeOriginalOnDragOut == true {
+            return [.move, .copy]
+        }
         return .copy
     }
 
@@ -284,7 +290,7 @@ final class ItemRowView: NSView, NSDraggingSource {
         let succeeded = operation != []
         controller?.internalDragEnded()
         if succeeded {
-            controller?.remove(itemID: item.id)
+            controller?.dragOutSucceeded(itemID: item.id, operation: operation)
         }
     }
 }

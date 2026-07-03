@@ -11,6 +11,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
     private var loginItem: NSMenuItem?
     private var textDragsItem: NSMenuItem?
     private var watchClipboardItem: NSMenuItem?
+    private var moveOutItem: NSMenuItem?
     private var positionMenu: NSMenu?
     private var sizeMenu: NSMenu?
 
@@ -138,6 +139,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
         menu.addItem(.separator())
 
+        let moveOut = NSMenuItem(title: "Remove Original After Drag-Out", action: #selector(toggleMoveOut(_:)), keyEquivalent: "")
+        moveOut.target = self
+        moveOut.toolTip = "When on, dragging an item out of Ledge sends the original to the Trash instead of leaving a copy."
+        menu.addItem(moveOut)
+        moveOutItem = moveOut
+
         let textDrags = NSMenuItem(title: "Show Shelf for Text Drags", action: #selector(toggleTextDrags(_:)), keyEquivalent: "")
         textDrags.target = self
         menu.addItem(textDrags)
@@ -168,6 +175,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
         showHideItem?.title = shelf.isVisible ? "Hide Ledge" : "Show Ledge"
         textDragsItem?.state = (UserDefaults.standard.object(forKey: "IncludeTextDrags") as? Bool ?? true) ? .on : .off
         watchClipboardItem?.state = ClipboardMonitor.isEnabled ? .on : .off
+        moveOutItem?.state = UserDefaults.standard.bool(forKey: ShelfController.removeOriginalKey) ? .on : .off
         if Bundle.main.bundlePath.hasSuffix(".app") {
             loginItem?.isHidden = false
             loginItem?.state = SMAppService.mainApp.status == .enabled ? .on : .off
@@ -226,6 +234,11 @@ final class AppDelegate: NSObject, NSApplicationDelegate, NSMenuDelegate, NSMenu
 
     @objc private func toggleWatchClipboard(_ sender: Any?) {
         ClipboardMonitor.isEnabled.toggle()
+    }
+
+    @objc private func toggleMoveOut(_ sender: Any?) {
+        let defaults = UserDefaults.standard
+        defaults.set(!defaults.bool(forKey: ShelfController.removeOriginalKey), forKey: ShelfController.removeOriginalKey)
     }
 
     @objc private func toggleTextDrags(_ sender: Any?) {
