@@ -18,6 +18,11 @@ cp Info.plist "$APP/Contents/Info.plist"
 cp Ledge.icns "$APP/Contents/Resources/Ledge.icns"
 codesign --force -s - "$APP"
 
+# Nudge Finder/LaunchServices so the icon is picked up immediately instead of
+# showing a stale or generic icon from a previous iconless build.
+touch "$APP"
+/System/Library/Frameworks/CoreServices.framework/Frameworks/LaunchServices.framework/Support/lsregister -f "$APP" 2>/dev/null || true
+
 echo "Built $APP"
 lipo -archs "$APP/Contents/MacOS/Ledge" 2>/dev/null || true
 echo "Run it with: open $APP"
