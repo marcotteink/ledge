@@ -202,6 +202,59 @@
   .feature h3 { font-size: 15px; margin-bottom: 5px; }
   .feature p { color: var(--muted); font-size: 13.5px; line-height: 1.5; }
 
+  /* ---- menu bar command center ---- */
+  .menuwrap { display: grid; grid-template-columns: 340px 1fr; gap: 40px; align-items: start; margin-top: 36px; }
+  .menucol { position: sticky; top: 24px; }
+  .fakebar {
+    background: rgba(255,255,255,0.07); border: 1px solid var(--card-border);
+    border-radius: 10px 10px 0 0; height: 30px; display: flex; align-items: center;
+    justify-content: flex-end; gap: 14px; padding: 0 14px; color: var(--muted);
+  }
+  .fakebar .mbicon { font-size: 12px; opacity: 0.6; }
+  .fakebar .mbicon.active { opacity: 1; color: var(--text); position: relative; }
+  .fakebar .mbicon.active::after {
+    content: ""; position: absolute; inset: -5px -7px; background: rgba(96,165,250,0.28);
+    border-radius: 6px; z-index: -1;
+  }
+  .menumock {
+    background: rgba(30,33,42,0.96); border: 1px solid rgba(255,255,255,0.12);
+    border-top: none; border-radius: 0 0 12px 12px; padding: 6px;
+    box-shadow: 0 30px 70px rgba(0,0,0,0.55); font-size: 13.5px;
+  }
+  .menumock .mi {
+    display: flex; align-items: center; justify-content: space-between; gap: 10px;
+    padding: 6px 10px; border-radius: 6px; color: var(--text); cursor: default;
+    transition: background .12s ease;
+  }
+  .menumock .mi:hover { background: rgba(96,165,250,0.22); }
+  .menumock .mi.dim { color: var(--muted); opacity: 0.55; }
+  .menumock .mi .k { color: var(--muted); font-size: 12px; }
+  .menumock .mi .chk { width: 14px; display: inline-block; color: var(--accent-2); }
+  .menumock .mi .lbl { flex: 1; }
+  .menumock .sep { height: 1px; background: rgba(255,255,255,0.09); margin: 6px 8px; }
+  .menumock .mi[data-hl]:not(.dim) { }
+  .menumock .mi.spot { background: rgba(96,165,250,0.14); box-shadow: inset 0 0 0 1px rgba(96,165,250,0.4); }
+
+  .menuexplain { display: flex; flex-direction: column; gap: 14px; }
+  .mrow {
+    background: var(--card); border: 1px solid var(--card-border); border-radius: 14px;
+    padding: 18px 20px; display: flex; gap: 16px; align-items: flex-start;
+    transition: border-color .2s ease, transform .2s ease;
+  }
+  .mrow:hover { border-color: rgba(96,165,250,0.45); transform: translateY(-2px); }
+  .mrow .mi-ico {
+    font-size: 20px; flex-shrink: 0; width: 40px; height: 40px; border-radius: 11px;
+    display: flex; align-items: center; justify-content: center;
+    background: rgba(96,165,250,0.14); border: 1px solid rgba(96,165,250,0.25);
+  }
+  .mrow h3 { font-size: 15.5px; margin-bottom: 3px; }
+  .mrow h3 .tag {
+    font-size: 10.5px; font-weight: 700; text-transform: uppercase; letter-spacing: 0.8px;
+    color: var(--accent-2); background: rgba(96,165,250,0.14); border-radius: 5px;
+    padding: 2px 7px; margin-left: 8px; vertical-align: middle;
+  }
+  .mrow p { color: var(--muted); font-size: 14px; line-height: 1.5; }
+
   .install {
     background: var(--card); border: 1px solid var(--card-border); border-radius: 20px;
     padding: 36px; margin-top: 36px;
@@ -305,6 +358,8 @@
   @media (max-width: 860px) {
     .grid { grid-template-columns: repeat(2, 1fr); }
     .steps { grid-template-columns: 1fr; }
+    .menuwrap { grid-template-columns: 1fr; gap: 24px; }
+    .menucol { position: static; max-width: 340px; }
     .demo { height: 420px; }
     .demo .finder { width: 62%; }
     .flyfile { animation-name: flymobile; }
@@ -401,6 +456,98 @@
       <div class="feature"><span class="ico">&#128209;</span><h3>Your shelf, your spot</h3><p>Park it on the left or right edge, top, middle, or bottom, or have it appear at your pointer. Three sizes.</p></div>
       <div class="feature"><span class="ico">&#128274;</span><h3>Private by design</h3><p>No account, no network calls, no analytics. Everything stays in a local folder on your Mac. Concealed clipboard data from password managers is never captured.</p></div>
       <div class="feature"><span class="ico">&#128150;</span><h3>Free and open source</h3><p>MIT licensed. Read every line of code, build it yourself, or grab the download. No trial, no upsell.</p></div>
+    </div>
+  </section>
+
+  <section id="menu">
+    <p class="kicker">The menu bar</p>
+    <h2>One little icon. A whole command center.</h2>
+    <p class="lede">The shelf is only half of Ledge. Click the tray icon in your menu bar (or the gear on the shelf) and everything opens up: a multi-item clipboard, iPhone capture, undo, and full control over where the shelf lives. Here's the actual menu, explained.</p>
+
+    <div class="menuwrap">
+      <div class="menucol" aria-hidden="true">
+        <div class="fakebar">
+          <span class="mbicon active">&#9660;</span>
+          <span class="mbicon">&#10022;</span>
+          <span class="mbicon">&#9992;</span>
+          <span class="mbicon">&#128267;</span>
+          <span class="mbicon">&#128246;</span>
+        </div>
+        <div class="menumock">
+          <div class="mi dim"><span class="lbl">Bring Back Last Removed Files</span></div>
+          <div class="mi"><span class="lbl">Add Clipboard Contents to Ledge</span></div>
+          <div class="mi spot"><span class="chk">&#10003;</span><span class="lbl">Automatically Add Clipboard</span></div>
+          <div class="mi dim"><span class="lbl">Import from iPhone or iPad</span></div>
+          <div class="sep"></div>
+          <div class="mi"><span class="lbl">Window Position</span><span class="k">&#8250;</span></div>
+          <div class="mi"><span class="lbl">Window Size</span><span class="k">&#8250;</span></div>
+          <div class="mi"><span class="lbl">Show Ledge</span><span class="k">F5</span></div>
+          <div class="sep"></div>
+          <div class="mi"><span class="chk">&#10003;</span><span class="lbl">Show Shelf for Text Drags</span></div>
+          <div class="mi"><span class="chk">&#10003;</span><span class="lbl">Start at Login</span></div>
+          <div class="sep"></div>
+          <div class="mi"><span class="lbl">Clear Ledge</span></div>
+          <div class="mi"><span class="lbl">About Ledge</span></div>
+          <div class="sep"></div>
+          <div class="mi"><span class="lbl">Quit Ledge</span><span class="k">&#8984;Q</span></div>
+        </div>
+      </div>
+
+      <div class="menuexplain">
+        <div class="mrow">
+          <div class="mi-ico">&#128203;</div>
+          <div>
+            <h3>Automatically Add Clipboard <span class="tag">the big one</span></h3>
+            <p>Turn this on and Ledge becomes a multi-item clipboard. Every copy you make quietly stacks up on the shelf, so you can copy five things in a row and paste each one wherever it needs to go. macOS only remembers your last single copy. Ledge remembers them all. Password-manager entries marked private are skipped automatically.</p>
+          </div>
+        </div>
+        <div class="mrow">
+          <div class="mi-ico">&#8634;</div>
+          <div>
+            <h3>Bring Back Last Removed Files</h3>
+            <p>An undo button for your shelf. Dragged something off too soon, or hit Clear by accident? This puts it right back. Ledge quietly remembers your last ten removals, so a mistake is never permanent.</p>
+          </div>
+        </div>
+        <div class="mrow">
+          <div class="mi-ico">&#128241;</div>
+          <div>
+            <h3>Import from iPhone or iPad</h3>
+            <p>Point your iPhone at a receipt, business card, or whiteboard and the photo or scan lands straight on the shelf, ready to drag into an email or folder. Powered by Apple Continuity Camera, no cables, no AirDrop dance.</p>
+          </div>
+        </div>
+        <div class="mrow">
+          <div class="mi-ico">&#128204;</div>
+          <div>
+            <h3>Add Clipboard Contents</h3>
+            <p>A one-shot version of the collector. Grab whatever is on your clipboard right now, a file, an image, or text, and drop it on the shelf without turning on continuous capture.</p>
+          </div>
+        </div>
+        <div class="mrow">
+          <div class="mi-ico">&#128209;</div>
+          <div>
+            <h3>Window Position &amp; Size</h3>
+            <p>Put the shelf exactly where your hands already go: either edge, top, middle, or bottom, or floating right at your pointer. Pick Small, Medium, or Large to match your screen and how much you keep on hand.</p>
+          </div>
+        </div>
+        <div class="mrow">
+          <div class="mi-ico">&#9000;</div>
+          <div>
+            <h3>Show Ledge <span class="tag">F5</span></h3>
+            <p>Summon or dismiss the shelf from any app with one keypress, even when it's empty and hidden. Great for parking something you'll need in a minute without reaching for the mouse.</p>
+          </div>
+        </div>
+        <div class="mrow">
+          <div class="mi-ico">&#9881;</div>
+          <div>
+            <h3>Text Drags, Start at Login &amp; the rest</h3>
+            <p>Toggle whether selected text pops the shelf, have Ledge launch quietly when your Mac starts, clear everything at once, or quit. Small switches that make it feel like yours.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="callout" style="margin-top:26px;">
+      <strong>Can't find the icon?</strong> On a MacBook with a notch, a crowded menu bar can tuck new icons behind it. No problem: press <strong style="color:var(--text)">F5</strong> to bring up the shelf, then click the <strong style="color:var(--text)">gear</strong> in its corner (or right-click the shelf) for this exact same menu. To surface the menu bar icon, quit an app you don't need up there, or hold Command and drag menu bar icons to rearrange them.
     </div>
   </section>
 
