@@ -419,7 +419,7 @@
     <h1>A shelf for your files,<br><span>right when you need it.</span></h1>
     <p class="sub">Ledge is a free drag-and-drop shelf for macOS. Start dragging a file and a shelf appears at the edge of your screen. Park things there, then drag them out wherever they need to go. No more window juggling.</p>
     <div class="cta" id="get">
-      <form class="dl-form" action="https://screenprint-gpt.outseta.com/email/lists/vW5XAA94/subscribe" method="post">
+      <form class="dl-form" action="https://screenprint-gpt.outseta.com/email/lists/vW5XAA94/subscribe" method="post" target="dl_sink">
         <input type="email" name="Email" placeholder="you@email.com" required aria-label="Email address">
         <div style="position:absolute; left:-5000px;" aria-hidden="true">
           <input type="text" name="o_4miQ8fylLJ3Xa2oGTBHxPUs7_dPX8us5N" tabindex="-1" value="">
@@ -429,6 +429,7 @@
           Email me the download
         </button>
       </form>
+      <iframe name="dl_sink" style="display:none" aria-hidden="true" title="form target"></iframe>
       <a class="btn secondary" href="https://github.com/marcotteink/ledge">View on GitHub</a>
     </div>
     <p class="dl-msg" role="status"></p>
@@ -743,24 +744,25 @@
   var form = document.querySelector('.dl-form');
   var msg = document.querySelector('.dl-msg');
   if (!form) return;
+  var sink = document.querySelector('iframe[name="dl_sink"]');
+  var done = false;
+  function success() {
+    if (done) return;
+    done = true;
+    form.style.display = 'none';
+    show('Check your inbox! Click the confirmation link we just sent and your download starts right away. Not there in a minute? Check spam.', true);
+  }
   form.addEventListener('submit', function (e) {
-    e.preventDefault();
-    var btn = form.querySelector('button');
     var email = form.Email.value.trim();
     if (!email || email.indexOf('@') < 1 || email.indexOf('.', email.indexOf('@')) < 0) {
+      e.preventDefault();
       show('That email doesn’t look right. Give it another go.', false);
       return;
     }
+    var btn = form.querySelector('button');
     btn.disabled = true; btn.style.opacity = 0.6;
-    fetch(form.action, { method: 'POST', body: new FormData(form), mode: 'no-cors' })
-      .then(function () {
-        form.style.display = 'none';
-        show('Check your inbox! Click the confirmation link we just sent and your download starts right away. Not there in a minute? Check spam.', true);
-      })
-      .catch(function () {
-        form.submit();
-      })
-      .finally(function () { btn.disabled = false; btn.style.opacity = 1; });
+    sink.addEventListener('load', success, { once: true });
+    setTimeout(success, 4000);
   });
   document.querySelectorAll('a[href="#get"]').forEach(function (a) {
     a.addEventListener('click', function () {
