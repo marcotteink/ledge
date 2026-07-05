@@ -481,7 +481,7 @@
     <h2>Small app. Big quality of life.</h2>
     <div class="grid">
       <div class="feature"><span class="ico">&#10024;</span><h3>Appears when you need it</h3><p>The shelf only shows up while you are dragging or holding items. The rest of the time it stays out of your way.</p></div>
-      <div class="feature"><span class="ico">&#128203;</span><h3>Clipboard collector</h3><p>Flip one toggle and every copy you make stacks up on the shelf. Copy five things in a row, paste them anywhere, in any order.</p></div>
+      <div class="feature"><span class="ico">&#128203;</span><h3>Clipboard collector</h3><p>Flip one toggle and every copy you make stacks up on the shelf. Copy five things in a row, paste them anywhere, in any order. Each capture is named by its content, and repeat copies never pile up twice.</p></div>
       <div class="feature"><span class="ico">&#128241;</span><h3>Import from iPhone</h3><p>Snap a photo or scan a document with your iPhone and it lands straight on the shelf, via Apple Continuity Camera.</p></div>
       <div class="feature"><span class="ico">&#9000;</span><h3>F5 from anywhere</h3><p>One key shows or hides the shelf in any app. No clicking around to find it.</p></div>
       <div class="feature"><span class="ico">&#8634;</span><h3>Bring things back</h3><p>Removed something too soon? One click restores your last removed files. Ledge remembers your last ten removals.</p></div>
@@ -532,7 +532,7 @@
           <div class="mi-ico">&#128203;</div>
           <div>
             <h3>Automatically Add Clipboard <span class="tag">the big one</span></h3>
-            <p>Turn this on and Ledge becomes a multi-item clipboard. Every copy you make quietly stacks up on the shelf, so you can copy five things in a row and paste each one wherever it needs to go. macOS only remembers your last single copy. Ledge remembers them all. Password-manager entries marked private are skipped automatically.</p>
+            <p>Turn this on and Ledge becomes a multi-item clipboard. Every copy you make quietly stacks up on the shelf, so you can copy five things in a row and paste each one wherever it needs to go. macOS only remembers your last single copy. Ledge remembers them all. Text captures are named by what they say, copying the same thing twice never creates a duplicate, and password-manager entries marked private are skipped automatically.</p>
           </div>
         </div>
         <div class="mrow">
@@ -665,12 +665,14 @@
       <tr><td>Drag a file anywhere</td><td>Shelf fades in at the screen edge, ready for a drop</td></tr>
       <tr><td>Drop on the shelf</td><td>Item is parked. Any part of the shelf accepts the drop</td></tr>
       <tr><td>Drag an item off the shelf</td><td>Copies to the destination and clears from the shelf (or moves it, with move mode on)</td></tr>
+      <tr><td>Drag the stack icon in the header</td><td>Drags every item out at once, as one drop</td></tr>
       <tr><td>Double-click an item</td><td>Opens the file</td></tr>
+      <tr><td>Right-click an item</td><td>Open, Reveal in Finder, Copy, or Remove</td></tr>
       <tr><td>Hover an item, click the x</td><td>Removes it (recoverable with Bring Back)</td></tr>
       <tr><td>F5 (or Fn F5)</td><td>Show or hide the shelf from any app</td></tr>
-      <tr><td>Gear icon or right-click the shelf</td><td>Opens the full menu</td></tr>
+      <tr><td>Gear icon or right-click the shelf background</td><td>Opens the full menu</td></tr>
       <tr><td>Drag the shelf header</td><td>Moves the shelf anywhere on screen</td></tr>
-      <tr><td>Copy anything (with clipboard collecting on)</td><td>Lands on the shelf silently as a new item</td></tr>
+      <tr><td>Copy anything (with clipboard collecting on)</td><td>Lands on the shelf silently, named by its content. Repeat copies are skipped</td></tr>
     </table>
   </section>
 

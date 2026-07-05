@@ -36,6 +36,87 @@ final class FirstMouseButton: NSButton {
     override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
 }
 
+/// Header grip that drags every shelf item out in a single gesture, closing
+/// the "one row at a time" gap. The items leave as one drag session, so
+/// Finder and other apps receive them together.
+final class DragAllHandle: NSView, NSDraggingSource {
+    private weak var controller: ShelfController?
+    private var mouseDownEvent: NSEvent?
+    private let iconView = NSImageView()
+
+    init(controller: ShelfController) {
+        self.controller = controller
+        super.init(frame: .zero)
+        translatesAutoresizingMaskIntoConstraints = false
+        let image = NSImage(systemSymbolName: "rectangle.stack", accessibilityDescription: "Drag all items") ?? NSImage()
+        iconView.image = image
+        iconView.contentTintColor = .secondaryLabelColor
+        iconView.translatesAutoresizingMaskIntoConstraints = false
+        addSubview(iconView)
+        NSLayoutConstraint.activate([
+            widthAnchor.constraint(equalToConstant: 22),
+            heightAnchor.constraint(equalToConstant: 22),
+            iconView.centerXAnchor.constraint(equalTo: centerXAnchor),
+            iconView.centerYAnchor.constraint(equalTo: centerYAnchor),
+        ])
+    }
+
+    required init?(coder: NSCoder) { fatalError("not used") }
+
+    override func acceptsFirstMouse(for event: NSEvent?) -> Bool { true }
+    override var mouseDownCanMoveWindow: Bool { false }
+
+    override func mouseDown(with event: NSEvent) {
+        mouseDownEvent = event
+    }
+
+    override func mouseUp(with event: NSEvent) {
+        mouseDownEvent = nil
+    }
+
+    override func mouseDragged(with event: NSEvent) {
+        guard let down = mouseDownEvent, let controller, !controller.items.isEmpty else { return }
+        let dx = event.locationInWindow.x - down.locationInWindow.x
+        let dy = event.locationInWindow.y - down.locationInWindow.y
+        guard (dx * dx + dy * dy) > 9 else { return }
+        mouseDownEvent = nil
+
+        let origin = convert(down.locationInWindow, from: nil)
+        let dragItems = controller.items.enumerated().map { index, item -> NSDraggingItem in
+            let dragItem = NSDraggingItem(pasteboardWriter: item.url as NSURL)
+            let offset = CGFloat(min(index, 5)) * 4
+            dragItem.setDraggingFrame(
+                NSRect(x: origin.x - 20 + offset, y: origin.y - 20 - offset, width: 40, height: 40),
+                contents: NSWorkspace.shared.icon(forFile: item.path)
+            )
+            return dragItem
+        }
+        beginDraggingSession(with: dragItems, event: down, source: self)
+    }
+
+    // MARK: - NSDraggingSource
+
+    func draggingSession(_ session: NSDraggingSession, sourceOperationMaskFor context: NSDraggingContext) -> NSDragOperation {
+        if context == .withinApplication { return [] }
+        if controller?.removeOriginalOnDragOut == true {
+            return [.move, .copy]
+        }
+        return .copy
+    }
+
+    func draggingSession(_ session: NSDraggingSession, willBeginAt screenPoint: NSPoint) {
+        controller?.internalDragBegan()
+    }
+
+    func draggingSession(_ session: NSDraggingSession, endedAt screenPoint: NSPoint, operation: NSDragOperation) {
+        let succeeded = operation != []
+        controller?.internalDragEnded()
+        if succeeded {
+            controller?.dragAllOutSucceeded(operation: operation)
+        }
+    }
+}
+
 /// The shelf's content view. Accepts drops of file URLs, file promises, and text.
 final class DropView: NSView {
     weak var controller: ShelfController?
@@ -267,6 +348,51 @@ final class ItemRowView: NSView, NSDraggingSource {
 
     @objc private func removeTapped() {
         controller?.remove(itemID: item.id)
+    }
+
+    // MARK: - Per-item context menu
+
+    /// Right-clicking a row gets item actions. The app menu stays reachable
+    /// from the gear button and by right-clicking the shelf background.
+    override func menu(for event: NSEvent) -> NSMenu? {
+        let menu = NSMenu()
+        let open = NSMenuItem(title: "Open", action: #selector(openItem), keyEquivalent: "")
+        open.target = self
+        menu.addItem(open)
+        let reveal = NSMenuItem(title: "Reveal in Finder", action: #selector(revealItem), keyEquivalent: "")
+        reveal.target = self
+        menu.addItem(reveal)
+        let copy = NSMenuItem(title: "Copy", action: #selector(copyItem), keyEquivalent: "")
+        copy.target = self
+        menu.addItem(copy)
+        menu.addItem(.separator())
+        let remove = NSMenuItem(title: "Remove from Ledge", action: #selector(removeTapped), keyEquivalent: "")
+        remove.target = self
+        menu.addItem(remove)
+        return menu
+    }
+
+    @objc private func openItem() {
+        NSWorkspace.shared.open(item.url)
+    }
+
+    @objc private func revealItem() {
+        NSWorkspace.shared.activateFileViewerSelecting([item.url])
+    }
+
+    /// Text snippets copy their contents so they paste straight into any
+    /// text field; everything else copies as a file for pasting in Finder.
+    @objc private func copyItem() {
+        let pb = NSPasteboard.general
+        pb.clearContents()
+        if item.url.pathExtension == "txt",
+           item.path.hasPrefix(Store.filesDir.path + "/"),
+           let text = try? String(contentsOf: item.url, encoding: .utf8) {
+            controller?.noteClipboardWrite(text)
+            pb.setString(text, forType: .string)
+        } else {
+            pb.writeObjects([item.url as NSURL])
+        }
     }
 
     // MARK: - NSDraggingSource

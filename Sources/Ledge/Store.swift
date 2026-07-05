@@ -6,8 +6,21 @@ struct ShelfItem: Codable, Equatable {
 
     var url: URL { URL(fileURLWithPath: path) }
     var displayName: String { url.lastPathComponent }
+
+    /// Real files show their parent folder. Items living in Ledge's own
+    /// storage (snippets, clipboard images, promised files) would all show
+    /// the meaningless "Files", so they show kind and size instead.
     var subtitle: String {
-        url.deletingLastPathComponent().lastPathComponent
+        if path.hasPrefix(Store.filesDir.path + "/") {
+            let ext = url.pathExtension
+            let kind = ext.isEmpty ? "File" : ext.uppercased()
+            if let size = (try? url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize {
+                let bytes = ByteCountFormatter.string(fromByteCount: Int64(size), countStyle: .file)
+                return "\(kind) · \(bytes)"
+            }
+            return kind
+        }
+        return url.deletingLastPathComponent().lastPathComponent
     }
 }
 
@@ -63,8 +76,28 @@ enum Store {
         return url
     }
 
+    /// Filename derived from the text itself, so snippets on the shelf are
+    /// recognizable at a glance instead of all reading "Snippet <timestamp>".
+    static func snippetName(for text: String) -> String {
+        var name = text.split(whereSeparator: \.isNewline)
+            .map { $0.trimmingCharacters(in: .whitespaces) }
+            .first { !$0.isEmpty } ?? ""
+        for prefix in ["https://", "http://", "www."] where name.lowercased().hasPrefix(prefix) {
+            name = String(name.dropFirst(prefix.count))
+        }
+        let disallowed = CharacterSet(charactersIn: "/:\\?%*|\"<>").union(.controlCharacters)
+        name = String(name.unicodeScalars.map { disallowed.contains($0) ? "-" : Character($0) })
+        if name.count > 40 {
+            name = String(name.prefix(40)).trimmingCharacters(in: .whitespaces) + "…"
+        }
+        // A leading dot would make the file invisible in Finder
+        while name.hasPrefix(".") { name.removeFirst() }
+        name = name.trimmingCharacters(in: .whitespaces)
+        return name.isEmpty ? stampedName(prefix: "Snippet") : name
+    }
+
     static func saveSnippet(_ text: String) -> URL? {
-        let url = uniqueURL(name: stampedName(prefix: "Snippet"), ext: "txt")
+        let url = uniqueURL(name: snippetName(for: text), ext: "txt")
         do {
             try text.write(to: url, atomically: true, encoding: .utf8)
             return url

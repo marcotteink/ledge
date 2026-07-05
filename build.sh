@@ -25,4 +25,12 @@ touch "$APP"
 
 echo "Built $APP"
 lipo -archs "$APP/Contents/MacOS/Ledge" 2>/dev/null || true
+
+# Deploy to /Applications so the installed copy stays current with builds
+if [ -d "/Applications/Ledge.app" ] || [ -w "/Applications" ]; then
+  rm -rf "/Applications/Ledge.app"
+  cp -R "$APP" "/Applications/Ledge.app"
+  echo "Installed to /Applications/Ledge.app"
+fi
+
 echo "Run it with: open $APP"

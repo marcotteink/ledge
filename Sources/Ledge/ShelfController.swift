@@ -20,6 +20,8 @@ final class ShelfController: NSObject {
     private let scroll = NSScrollView()
     private let emptyState = NSStackView()
     private var clearButton: NSButton!
+    private var titleLabel: NSTextField!
+    private var dragAllHandle: DragAllHandle!
     private let promiseQueue = OperationQueue()
     private var pendingPromises = 0
     private var externalDragActive = false
@@ -30,8 +32,12 @@ final class ShelfController: NSObject {
     private var removedStack: [[ShelfItem]] = []
     private static let removedStackCap = 10
 
-    private var lastCapturedTextHash: Int?
-    private var lastCapturedImageHash: Int?
+    /// Content hashes of recent clipboard captures, newest last. Copying
+    /// A, then B, then A again must not shelve A twice, so this remembers
+    /// more than just the last capture. Seeded at launch from snippets
+    /// already on the shelf so re-copies across restarts stay deduped too.
+    private var recentCaptureHashes: [Int] = []
+    private static let recentHashCap = 64
 
     private static let rowSpacing: CGFloat = 2
     private static let headerHeight: CGFloat = 34
@@ -56,8 +62,49 @@ final class ShelfController: NSObject {
     func restore() {
         items = Store.load()
         Store.sweepOrphans(keeping: items)
+        seedCaptureHashes()
         refresh()
         if !items.isEmpty { show() }
+    }
+
+    /// Remembers the content of text snippets already on the shelf so the
+    /// clipboard watcher does not shelve the same text again after a relaunch.
+    private func seedCaptureHashes() {
+        let snippets = items.filter {
+            $0.path.hasPrefix(Store.filesDir.path + "/") && $0.url.pathExtension == "txt"
+        }
+        DispatchQueue.global(qos: .utility).async { [weak self] in
+            var hashes: [Int] = []
+            for item in snippets {
+                guard let size = (try? item.url.resourceValues(forKeys: [.fileSizeKey]))?.fileSize,
+                      size <= 262_144,
+                      let text = try? String(contentsOf: item.url, encoding: .utf8) else { continue }
+                hashes.append(text.hashValue)
+            }
+            DispatchQueue.main.async {
+                for hash in hashes { self?.rememberCapture(hash) }
+            }
+        }
+    }
+
+    private func alreadyCaptured(_ hash: Int) -> Bool {
+        if recentCaptureHashes.contains(hash) { return true }
+        rememberCapture(hash)
+        return false
+    }
+
+    /// Rows call this before copying a snippet's text back to the clipboard
+    /// so the watcher does not capture our own copy as a new item.
+    func noteClipboardWrite(_ text: String) {
+        rememberCapture(text.hashValue)
+    }
+
+    private func rememberCapture(_ hash: Int) {
+        recentCaptureHashes.removeAll { $0 == hash }
+        recentCaptureHashes.append(hash)
+        if recentCaptureHashes.count > Self.recentHashCap {
+            recentCaptureHashes.removeFirst(recentCaptureHashes.count - Self.recentHashCap)
+        }
     }
 
     // MARK: - Drag state from the monitor
@@ -119,19 +166,21 @@ final class ShelfController: NSObject {
     }
 
     func bringBackLastRemoved() {
-        guard let group = removedStack.popLast() else { return }
-        let existing = group.filter { FileManager.default.fileExists(atPath: $0.path) }
-        guard !existing.isEmpty else {
-            NSSound.beep()
+        // Skip past groups whose files no longer exist instead of burning
+        // the undo on them, so one stale group cannot swallow the gesture.
+        while let group = removedStack.popLast() {
+            let existing = group.filter { FileManager.default.fileExists(atPath: $0.path) }
+            guard !existing.isEmpty else { continue }
+            for item in existing.reversed() {
+                items.removeAll { $0.path == item.path }
+                items.insert(item, at: 0)
+            }
+            refresh()
+            show()
+            NSLog("Ledge: brought back \(existing.count) item(s)")
             return
         }
-        for item in existing.reversed() {
-            items.removeAll { $0.path == item.path }
-            items.insert(item, at: 0)
-        }
-        refresh()
-        show()
-        NSLog("Ledge: brought back \(existing.count) item(s)")
+        NSSound.beep()
     }
 
     func toggle() {
@@ -164,6 +213,7 @@ final class ShelfController: NSObject {
             return
         }
         if let text = pb.string(forType: .string), !text.isEmpty, let url = Store.saveSnippet(text) {
+            rememberCapture(text.hashValue)
             add(urls: [url])
             show()
             return
@@ -209,18 +259,14 @@ final class ShelfController: NSObject {
             return
         }
         if let (data, ext) = Self.imageData(from: pb) {
-            let hash = data.hashValue
-            guard hash != lastCapturedImageHash else { return }
-            lastCapturedImageHash = hash
+            guard !alreadyCaptured(data.hashValue) else { return }
             if let url = Store.saveData(data, ext: ext, prefix: "Clipboard") {
                 add(urls: [url], showShelf: false)
             }
             return
         }
         if let text = pb.string(forType: .string), !text.isEmpty {
-            let hash = text.hashValue
-            guard hash != lastCapturedTextHash else { return }
-            lastCapturedTextHash = hash
+            guard !alreadyCaptured(text.hashValue) else { return }
             if let url = Store.saveSnippet(text) {
                 add(urls: [url], showShelf: false)
             }
@@ -258,6 +304,20 @@ final class ShelfController: NSObject {
             trashOriginal(item)
         }
         remove(itemID: itemID)
+    }
+
+    /// Called when the header's drag-all handle lands everything in another
+    /// app or Finder. The whole shelf leaves as one undo group.
+    func dragAllOutSucceeded(operation: NSDragOperation) {
+        guard !items.isEmpty else { return }
+        if removeOriginalOnDragOut, operation != .move {
+            for item in items { trashOriginal(item) }
+        }
+        pushRemoved(items)
+        items.removeAll()
+        refresh()
+        hideIfIdleSoon()
+        NSLog("Ledge: dragged all items out")
     }
 
     private func trashOriginal(_ item: ShelfItem) {
@@ -314,6 +374,7 @@ final class ShelfController: NSObject {
 
         // 3. Plain text becomes a snippet file
         if let text = pb.string(forType: .string), !text.isEmpty, let url = Store.saveSnippet(text) {
+            rememberCapture(text.hashValue)
             add(urls: [url])
             return true
         }
@@ -450,6 +511,8 @@ final class ShelfController: NSObject {
         }
         emptyState.isHidden = !items.isEmpty
         clearButton.isHidden = items.isEmpty
+        titleLabel?.stringValue = items.isEmpty ? "Ledge" : "Ledge · \(items.count)"
+        dragAllHandle?.isHidden = items.count < 2
         updateFrame(animate: true)
         Store.save(items)
     }
@@ -505,6 +568,11 @@ final class ShelfController: NSObject {
         let title = NSTextField(labelWithString: "Ledge")
         title.font = .systemFont(ofSize: 12, weight: .semibold)
         title.textColor = .secondaryLabelColor
+        titleLabel = title
+
+        let handle = DragAllHandle(controller: self)
+        handle.toolTip = "Drag all items out at once"
+        dragAllHandle = handle
 
         let clear = FirstMouseButton(
             image: NSImage(systemSymbolName: "trash", accessibilityDescription: "Clear all") ?? NSImage(),
@@ -531,6 +599,7 @@ final class ShelfController: NSObject {
         header.edgeInsets = NSEdgeInsets(top: 0, left: 14, bottom: 0, right: 10)
         header.translatesAutoresizingMaskIntoConstraints = false
         header.addView(title, in: .leading)
+        header.addView(handle, in: .trailing)
         header.addView(clear, in: .trailing)
         header.addView(gear, in: .trailing)
         effect.addSubview(header)
